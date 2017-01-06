@@ -1,0 +1,219 @@
+import java.io.*;
+import javax.swing.JOptionPane;
+
+/** This sorts and outputs the top 10 highest game scores and according usernames into a file. 
+  * 
+  * @author Sabrina Cancelliere
+  * @version 4, June 6 2014.
+  */
+public class HighScores
+{
+  /**
+   * (int) Stores the user's latest score.
+   */
+  int score;
+  /** 
+   * (String) Stores the current user's username.
+   */
+  String username;
+  /**
+   * (String) Stores the name of the highscores file. 
+   */
+  String fileName = "HighScoresFile.scxhz";
+  /** 
+   * (String) Stores the user's current level.
+   */
+  String level;
+  /** 
+   * (String array) Stores the top ten usernames as well as the most recent username for processing.
+   */
+  String [] usernames;
+  /** 
+   * tempStr (String array) Stores the high scores read in from the file to be parsed.
+   */
+  String [] tempStr;
+  /** 
+   * (String array) Stores the top ten highscores as well as the most recent score for processing. 
+   */
+  int [] scores = new int [11];
+  
+  /**This method is a constructor of HighScores, which sets the values of score, username and level.
+    * 
+    * The if structure controls the execution of the class based on the boolean returned by readFile. 
+    * 
+    * @param score (int) Sends in the latest score.
+    * @param username (String) Sends in the latest username.
+    * @param level (String) Sends in the current level
+    */ 
+  public HighScores (int score, String username, String level)
+  {
+    this.score = score;
+    this.username = username + " " + level;
+    usernames = new String [11];
+    tempStr = new String [11];
+    
+    if (readFile(tempStr, usernames))
+      sortScores();
+    printToFile (scores, usernames);
+  }
+  
+  /**This method is the second constructor of HighScores, which accepts two string arrays.
+    * 
+    * The if structure controls the execution of the class based on the boolean returned by readFile. 
+    * 
+    * @param usernames (String array) Stores the top ten usernames.
+    * @param tempStr (String array) Stores the top ten high scores.
+    */ 
+  public HighScores (String [] tempStr, String [] usernames)
+  { 
+    if (!readFile(tempStr, usernames))
+    {
+      printToFile (new int [10], new String [10]);
+      readFile(tempStr, usernames);
+    }
+  }
+  
+  /** This method checks the validity of the highscores file and reads in its contents, otherwise it creates a new one.
+    * 
+    * 
+    * The first for loop is used to read in the information from the highscores file while sorting it into arrays.
+    * 
+    * The first if structure checks to make sure the file being read starts with the correct "Sabrina and Xin Hao" 
+    * and has the proper file extension. 
+    * The next if statement is used to sort the data being read from the file into the correct array 
+    * (Username and level in one array, scores in the next).
+    * 
+    * The first try catch catches any exceptions when reading from the file.
+    * The next catch catches any NullPointerExceptions.
+    * 
+    * @param tempStr (String array) Where to temporarily store scores.
+    * @param usernames (String) Where to store usernames.
+    * @param input (reference) References the BufferedReader class to read from the highscores file.
+    * @param x (int) Used in the for loops.
+    * @param e (reference) Type of exception that occured.
+    * @returns (boolean) Whether or not the file was read successfully.
+    * @throws IOException If there is a problem reading from the file.
+    * @throws NullPointerException If the program attempts to sue a null variable in the place of an actual value. 
+    */
+  public boolean readFile (String [] tempStr, String [] usernames)
+  {
+    BufferedReader input;
+    try
+    {
+      input = new BufferedReader (new FileReader (System.getProperty("user.dir") + "/resources/" + fileName));
+      for (int x = -1; x < 20; x ++)
+      {
+        if (x == -1)
+        {
+          String fheader = input.readLine();
+          if (!fheader.equals ("Sabrina and Xin Hao") || !fileName.endsWith (".scxhz"))
+          {
+            JOptionPane.showMessageDialog (null, "The highscores file is corrupt. A new one will be created.", "Error", JOptionPane.ERROR_MESSAGE);
+            return false;
+          }
+        }
+        else if (x%2 == 0)
+          usernames [x/2] = input.readLine ();
+        else
+          tempStr [x/2] = input.readLine ();
+      }
+    }
+    catch (IOException e)
+    {
+      return false;
+    }
+    catch (NullPointerException e)
+    {
+      return false;
+    }
+    return true;
+  }
+  
+  
+  /** This method is used to sort the new score into the top ten scores.
+    * 
+    * 
+    * The first for loop is used to parse the integers read in from the file and store them in the scores array.
+    * The second and third nested for loops are used to sort the top ten scores read from the
+    * files and the new added score.
+    * 
+    * The try catch catches any exceptions when parsing the ints from the tempStr array. 
+    * 
+    * @param j (int) Used to sort the top ten scores.
+    * @param i (int) Used to sort the top ten scores.
+    * @param key (int) Used to sort the top ten scores.
+    * @param nameKey (String) Used to sort the top ten usernames and according levels.
+    * @param e (reference) Used in the try catches.
+    * @throw NumberFormatExceptions If a number can not be parsed correctly.
+    */
+  public void sortScores ()
+  {
+    int i, key;
+    String nameKey = " ";
+    try
+    {
+      for (int x = 0; x < 10; x++)
+      {
+        scores[x] = Integer.parseInt(tempStr[x]);
+      }
+    }
+    catch (NumberFormatException e)
+    {
+    }
+    usernames [10] = username;
+    scores [10] = score;
+    for (int j = 1; j < scores.length; j++)
+    {
+      key = scores [j];
+      nameKey = usernames [j];
+      for (i = j-1; (i >= 0) && (scores [i] < key); i--)
+      {
+        scores [i+1] = scores [i];
+        usernames [i+1] = usernames [i];
+      }
+      scores [i+1] = key;
+      usernames [i+1] = nameKey;
+    }
+  }
+  
+  /** This method is used to print the top ten scores and according usernames and levels into the highscores file.
+    * 
+    * The for loop is used to read the top ten scores and according information into the highscores file.
+    * The first and second if structures check whether the data being read in is either null or zero and 
+    * outputs "--" instead of the actual value in that case.
+    * 
+    * The try catch catches any exceptions when writing to the highscores file. 
+    * 
+    * @param scores (int array) The scores to print.
+    * @param usernames (String array) The usernames and levels to print.
+    * @param output (reference) References the PrintWriter class to allow data to be written into the highscores file. 
+    * @param x (int) Used in the for loop.
+    * @param e (reference) Used in the try catches.
+    * @throws IOExceptions If an error occurs writing to the file. 
+    */
+  public void printToFile (int [] scores, String [] usernames)
+  {
+    PrintWriter output;
+    try
+    {
+      output = new PrintWriter (new FileWriter (System.getProperty("user.dir") + "/resources/" + fileName));
+      output.println ("Sabrina and Xin Hao");
+      
+      for (int x = 0; x < 10; x++)
+      {
+        if (usernames[x] != null)
+          output.println (usernames [x]);
+        else
+          output.println ("-- --");
+        if (scores[x] > 0)
+          output.println (scores [x]);
+        else
+          output.println ("--");
+      }
+      output.close();
+    }
+    catch (IOException e)
+    {
+    }
+  }
+}
